@@ -21,6 +21,10 @@ type Item struct {
 	Data string `json:"data"`
 }
 
+func varDump(expression ...interface{}) {
+	fmt.Println(fmt.Sprintf("%#v", expression))
+}
+
 func checkAuth(response http.ResponseWriter, request *http.Request) (map[string]string, error) {
 	credentials := map[string]string{
 		"username": "",
@@ -64,14 +68,17 @@ func saveProvidersConfig(client *dynamodb.Client, item map[string]string) {
 }
 
 func main() {
-	// Using the SDK's default configuration, loading additional config
-	// and credentials values from the environment variables, shared
-	// credentials, and shared configuration files
+	region := os.Getenv("APP_REGION")
+	if region == "" {
+		region = "us-east-1"
+	}
+
 	cfg, err := config.LoadDefaultConfig(context.TODO(),
-		config.WithRegion("ap-southeast-1"),
+		config.WithRegion(region),
 	)
 	if err != nil {
 		log.Fatalf("unable to load SDK config, %v", err)
+		return
 	}
 
 	// Using the Config value, create the DynamoDB client
@@ -111,11 +118,13 @@ func main() {
 		}
 		resp, _ := ddbClient.GetItem(context.TODO(), paramItem)
 
+		if len(resp.Item) == 0 {
+			fmt.Fprint(response, "[]")
+			return
+		}
+
 		itemData := Item{}
 		attributevalue.UnmarshalMap(resp.Item, &itemData)
-
-		response.Header().Set("Content-Type", "application/json; charset=utf-8")
-		response.WriteHeader(http.StatusOK)
 
 		fmt.Fprintf(response, "%s", itemData.Data)
 	})
