@@ -282,10 +282,19 @@ void 0===o.counter||!INTEGER_REGEX.test(o.counter))throw new TypeError("Missing 
 <div class="config pages hide">
   <div class="item">
     <h3 class="item-title">Providers Config</h3>
-    <p class="item-desc">Enter your providers configuration, see example below for reference.</p>
+    <p class="item-desc">Enter your JSON providers configuration, see example below for reference.</p>
 
 <form method="post" action="/#config">
-<textarea class="providers-config" name="providers-config">[
+<textarea class="providers-config" name="providers-config">Fetching data...</textarea>
+    <p class="item-desc">
+      <button id="btn-load-providers" class="button">Show Tokens without Saving</button>
+      <input id="btn-save-config" class="button" type="submit" value="Save Config">
+  	</p>
+    </form>
+    
+    <h3>JSON Example</h3>
+    <br>
+    <pre><code>[
   {
     "provider": "AWS",
     "description": "Demo AWS Token",
@@ -313,12 +322,7 @@ void 0===o.counter||!INTEGER_REGEX.test(o.counter))throw new TypeError("Missing 
     "secret": "IZQWGZLCN5XWWLTD",
     "indicatorColor": "#4267B2"
   }
-]</textarea>
-    <p class="item-desc">
-      <button id="btn-load-providers" class="button">Load Tokens</button>
-      <input class="button" type="submit" value="Save Config">
-  	</p>
-    </form>
+]</code></pre>
   </div>
 </div>
 
@@ -465,6 +469,11 @@ $('#menu-main').onclick = function(e) {
 };
 
 $('#menu-config').onclick = function(e) {
+  if ($('.providers-config').value !== 'Fetching data...') {
+    openPage('config');
+    return;
+  }
+  
   getAuthFromApi(function(whoami) {
   getProvidersFromApi(whoami, null);
   }); // getAuthFromApi
@@ -472,7 +481,17 @@ $('#menu-config').onclick = function(e) {
 };
   
 $('#btn-load-providers').onclick = function(e) {
-  loadProviders();
+  loadProviders(true);
+  return false;
+};
+
+$('#btn-save-config').onclick = function(e) {
+  try {
+    JSON.parse($('.providers-config').value);
+    return true;
+  } catch (e) {}
+  
+  alert("Invalid JSON.");
   return false;
 };
   
@@ -486,7 +505,7 @@ function isValidJSON(data) {
   return false;
 }
   
-function loadProviders() {
+function loadProviders(redirectToMain) {
   var jsonConfig = $('.providers-config').value;
   if (! isValidJSON(jsonConfig)) {
     alert('Invalid JSON');
@@ -495,7 +514,15 @@ function loadProviders() {
   
   resetState();
   loadItems(jsonConfig);
-  openPage('main');  
+  
+  if (redirectToMain === true) {
+    openPage('main');
+    return;
+  }
+  
+  if (window.location.href.indexOf('#config') === -1) {
+    openPage('main');
+  }
 }
 
 function getAuthFromApi(callback) {
@@ -516,14 +543,24 @@ function getProvidersFromApi(whoami, callback) {
   ajax.setRequestHeader('Authorization', whoami.auth_data);
   ajax.onreadystatechange = function() {
     if (ajax.readyState === XMLHttpRequest.DONE) {
-			$('.providers-config').value = ajax.responseText;
-			if (callback) { callback(); }
+			try {
+			  var jsonProviders = JSON.parse(ajax.responseText);
+			  $('.providers-config').value = ajax.responseText;
+			  if (jsonProviders.length === 0) {
+			    return;
+			  }
+			  if (callback) { callback(); }
+			} catch (e) {}
     }
   }
   ajax.send();
 }
 
 window.addEventListener('DOMContentLoaded', function(e) {
+  if (window.location.href.indexOf('#') !== -1) {
+    openPage(window.location.hash.replace('#', ''));
+  }
+    
   setTimeout(function(e) {
     getAuthFromApi(function(whoami) {
     // then
