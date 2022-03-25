@@ -131,6 +131,11 @@ func main() {
 		fmt.Fprintf(response, `{ "username": "%s", "auth_data": "%s"}`, credentials["username"], request.Header.Get("Authorization"))
 	})
 
-	log.Print("Running web server on :8080")
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	appPort := os.Getenv("APP_PORT")
+	if appPort == "" {
+		appPort = "8080"
+	}
+
+	log.Print("Running web server on :", appPort)
+	log.Fatal(http.ListenAndServe(":"+appPort, nil))
 }
