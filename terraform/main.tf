@@ -246,6 +246,7 @@ resource "aws_apprunner_service" "demo" {
 
 output "app_runner" {
   value = {
+    arn = aws_apprunner_service.demo.arn
     endpoint = "https://${aws_apprunner_service.demo.service_url}"
   }
 }
