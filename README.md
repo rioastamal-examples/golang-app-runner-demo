@@ -4,6 +4,8 @@ This project contains example how to deploy simple Go WebApp to [AWS App Runner]
 
 > AWS App Runner is a fully managed service that makes it easy for developers to quickly deploy containerized web applications and APIs, at scale and with no prior infrastructure experience required. (aws.amazon.com)
 
+The web application is a simple browser based 2FA token generator inspired by [Gembok Authenticator](https://github.com/rioastamal/gembok). To protect the app it uses HTTP Basic Authentication. To save the token configuration it uses Amazon DynamoDB.
+
 ## Requirements
 
 This project has been tested using following softwares version, but it should works with other version too.
@@ -27,7 +29,7 @@ Go to `terraform/` directory.
 $ cd golang-app-runner-demo/terraform
 ```
 
-Run Terraform initialization then apply to create all AWS resources. Make sure you already configure your AWS CLI credentials before running command below.
+Run Terraform initialization then apply to create all AWS resources. Make sure you already configure your AWS CLI credentials before running command below. By default it will all the resources in `us-east-1` region.
 
 ```
 $ export APP_VERSION=1.1
