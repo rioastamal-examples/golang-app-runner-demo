@@ -12,11 +12,6 @@ variable "app_name" {
   default = "golang-app-runner-demo"
 }
 
-variable "create_ecr" {
-  type = string
-  default = "no"
-}
-
 variable "region" {
   type = string
   default = "us-east-1"
@@ -32,14 +27,13 @@ variable "app_password" {
   default = "demo123"
 }
 
-variable "app_domain" {
+variable "app_port" {
   type = string
-  default = "myappdemo.site"  
+  default = "8080"
 }
 
-variable "app_domain_demo" {
+variable "app_version" {
   type = string
-  default = "golang-app-runner-demo.myappdemo.site"
 }
 
 variable "app_tags" {
@@ -176,9 +170,26 @@ resource "aws_ecr_repository" "demo" {
   name                 = "${var.app_name}-${random_string.random.result}"
   image_tag_mutability = "MUTABLE"
   tags = var.app_tags
+  
+  # Deploy container image to ECR private repository
+  provisioner "local-exec" {
+    command = "bash build.sh --build-go --build-image --authenticate-to-ecr --push-image-ecr"
+    working_dir = abspath("${path.root}/../")
+    environment = {
+      APP_TABLE_NAME = "${var.app_name}-${random_string.random.result}"
+      APP_USERNAME = var.app_username
+      APP_PASSWORD = var.app_password
+      APP_REGION = var.region
+      APP_PORT = var.app_port
+      APP_RANDOM_STRING = random_string.random.result
+      APP_VERSION = var.app_version
+    }
+  }
 }
 
 resource "aws_apprunner_auto_scaling_configuration_version" "demo" {
+  depends_on = [aws_ecr_repository.demo]
+  
   auto_scaling_configuration_name = var.app_name
 
   max_concurrency = 100
@@ -189,6 +200,8 @@ resource "aws_apprunner_auto_scaling_configuration_version" "demo" {
 }
 
 resource "aws_apprunner_service" "demo" {
+  depends_on = [aws_apprunner_auto_scaling_configuration_version.demo]
+  
   service_name = "${var.app_name}-${random_string.random.result}"
   tags = var.app_tags
 
@@ -201,12 +214,13 @@ resource "aws_apprunner_service" "demo" {
   
     image_repository {
       image_configuration {
-        port = "8080"
+        port = var.app_port
         runtime_environment_variables = {
           APP_TABLE_NAME = aws_dynamodb_table.demo.name
           APP_REGION = var.region
           APP_USERNAME = var.app_username
           APP_PASSWORD = var.app_password
+          APP_PORT = var.app_port
         }
       }
       image_identifier      = "${data.aws_caller_identity.current.account_id}.dkr.ecr.${var.region}.amazonaws.com/${var.app_name}-${random_string.random.result}:latest"
@@ -220,40 +234,12 @@ resource "aws_apprunner_service" "demo" {
     instance_role_arn = aws_iam_role.demo_instance_role.arn
   }
   
-  auto_scaling_configuration_arn = aws_apprunner_auto_scaling_configuration_version.demo.arn
-}
-
-# Enable this if you want to create custom domain using Route53
-resource "aws_apprunner_custom_domain_association" "demo" {
-  domain_name = var.app_domain_demo
-  service_arn = aws_apprunner_service.demo.arn
-}
-
-data "aws_route53_zone" "demo" {
-  name = "${var.app_domain}"
-  private_zone = false
-}
-
-resource "aws_route53_record" "demo_domain" {
-  name = var.app_domain_demo
-  zone_id = data.aws_route53_zone.demo.zone_id
-  type = "CNAME"
-  records = [aws_apprunner_custom_domain_association.demo.dns_target]
-  ttl = 60
-}
-
-resource "aws_route53_record" "demo_domain_validation" {
-  for_each = {
-    for dvo in aws_apprunner_custom_domain_association.demo.certificate_validation_records : dvo.name => {
-      name = dvo.name
-      type = dvo.type
-      record = dvo.value
-    }
+  health_check_configuration {
+    healthy_threshold = 1
+    timeout = 5
+    interval = 1
+    unhealthy_threshold = 3
   }
   
-  name = each.value.name
-  zone_id = data.aws_route53_zone.demo.zone_id
-  type = each.value.type
-  records = [each.value.record]
-  ttl = 60
+  auto_scaling_configuration_arn = aws_apprunner_auto_scaling_configuration_version.demo.arn
 }
