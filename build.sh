@@ -81,4 +81,7 @@ echo "$@" | grep '\-\-push-image-ecr' > /dev/null && {
     cd $ABS_DIR && \
     echo "Pushing Docker image to ECR..." && \
     docker push "${AWS_ACCOUNT_ID}.dkr.ecr.${APP_REGION}.amazonaws.com/${APP_NAME}-${APP_RANDOM_STRING}":$APP_VERSION
+    docker push "${AWS_ACCOUNT_ID}.dkr.ecr.${APP_REGION}.amazonaws.com/${APP_NAME}-${APP_RANDOM_STRING}":latest
 }
+
+exit 0
