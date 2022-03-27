@@ -32,12 +32,32 @@ $ cd golang-app-runner-demo/terraform
 Run Terraform initialization then apply to create all AWS resources. Make sure you already configure your AWS CLI credentials before running command below. By default it will all the resources in `us-east-1` region.
 
 ```
-$ export APP_VERSION=1.1
+$ export TF_VAR_app_version=1.1
 $ terraform init
 $ terraform apply
 ```
 
 It may take several minutes to complete. When it is done you can go to your AWS App Runner Management Console to see the service. You will be given default domain inform of something like `https://RANDOM_STRING.us-east-1.awsapprunner.com/`.
+
+Below are list of Terraform variables that you can configure.
+
+- app_version (need to define e.g: `1.1`)
+- app_name (default: `golang-app-runner-demo`)
+- app_username (default: `golang-id@example.com`)
+- app_password (default: `demo123`)
+- app_port (default: `8080`)
+- region (default: `us-east-1`)
+- app_tags
+  - `env = "demo"`
+  - `app = "golang-app-runner-demo"`
+  - `fromTerraform = true`
+
+As an example if you want to change the username, before running `terraform apply` you can do following command.
+
+```
+$ export TF_VAR_app_version=1.1 TF_VAR_app_username=new-user@example.com
+$ terraform apply
+```
 
 ## Accessing WebApp
 
@@ -59,6 +79,14 @@ $ bash build.sh --build-go --build-image --authenticate-to-ecr --push-image-ecr
 ```
 
 Since we use option Automatic deployments, App Runner should automatically detect the change and replace the container with new version. You can go to App Runner Management Console to see the update.
+
+On top of two mentioned environment variables above you can also configure the build script using following environment variables:
+
+- APP_NAME (default: `golang-app-runner-demo`)
+- APP_USERNAME (default: `golang-id@example.com`)
+- APP_PASSWORD (default: `demo123`)
+- APP_PORT (default: `8080`)
+- APP_REGION (default: `us-east-1`)
 
 ## License
 
