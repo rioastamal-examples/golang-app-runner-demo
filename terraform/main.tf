@@ -243,3 +243,9 @@ resource "aws_apprunner_service" "demo" {
   
   auto_scaling_configuration_arn = aws_apprunner_auto_scaling_configuration_version.demo.arn
 }
+
+output "app_runner" {
+  value = {
+    endpoint = "https://${aws_apprunner_service.demo.service_url}"
+  }
+}
