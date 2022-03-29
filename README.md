@@ -74,7 +74,7 @@ Let say you want to deploy version 1.2. Assuming you're in root directory of the
 
 ```
 $ export APP_VERSION=1.2
-$ export APP_RANDOM_STRING=$( echo random_string.random.result | terraform -chrdir=terraform console | tr -d '"' )
+$ export APP_RANDOM_STRING=$( echo random_string.random.result | terraform -chdir=terraform console | tr -d '"' )
 $ bash build.sh --build-go --build-image --authenticate-to-ecr --push-image-ecr
 ```
 
