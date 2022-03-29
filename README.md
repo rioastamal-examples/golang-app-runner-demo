@@ -37,7 +37,7 @@ $ terraform init
 $ terraform apply
 ```
 
-It may take several minutes to complete. When it is done you can go to your AWS App Runner Management Console to see the service. You will be given default domain inform of something like `https://RANDOM_STRING.us-east-1.awsapprunner.com/`.
+It may take several minutes to complete. When it is done you can go to your AWS App Runner Management Console to see the service. You will be given default domain inform of something like `https://RANDOM_CHARS.us-east-1.awsapprunner.com/`.
 
 Below are list of Terraform variables that you can configure.
 
@@ -61,7 +61,7 @@ $ terraform apply
 
 ## Accessing WebApp
 
-Open your browser and go to `https://nkn32rj7ft.us-east-1.awsapprunner.com/`. You will be prompted by HTTP Basic Auth.
+Open your browser and go to `https://RANDOM_CHARS.us-east-1.awsapprunner.com/`. You will be prompted by HTTP Basic Auth.
 
 - Username: `golang-id@example.com`
 - Password: `demo123`
@@ -74,7 +74,7 @@ Let say you want to deploy version 1.2. Assuming you're in root directory of the
 
 ```
 $ export APP_VERSION=1.2
-$ export APP_RANDOM_STRING=$( echo random_string.random.result | terraform console | tr -d '"' )
+$ export APP_RANDOM_STRING=$( echo random_string.random.result | terraform -chrdir=terraform console | tr -d '"' )
 $ bash build.sh --build-go --build-image --authenticate-to-ecr --push-image-ecr
 ```
 
